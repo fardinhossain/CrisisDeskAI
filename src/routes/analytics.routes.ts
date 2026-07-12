@@ -9,7 +9,5 @@ import { asyncHandler } from "../utils/asyncHandler";
  */
 export const analyticsRouter = Router();
 
-analyticsRouter.use(requireAdmin);
-
 // GET /api/reports/stats/summary
 analyticsRouter.get("/summary", asyncHandler(analyticsController.summary));
