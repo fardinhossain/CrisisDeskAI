@@ -1,11 +1,13 @@
 {
   "name": "crisisdesk-ai",
   "version": "1.0.0",
-  "description": "CrisisDesk AI — Intelligent backend API for emergency & service request triage.",
+  "description": "CrisisDesk AI \u2014 Intelligent backend API for emergency & service request triage.",
   "main": "dist/server.js",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
@@ -17,8 +19,17 @@
     "seed": "prisma db seed",
     "test": "jest --runInBand"
   },
-  "prisma": { "seed": "tsx prisma/seed.ts" },
-  "keywords": ["emergency", "triage", "ai", "express", "prisma", "typescript"],
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "keywords": [
+    "emergency",
+    "triage",
+    "ai",
+    "express",
+    "prisma",
+    "typescript"
+  ],
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
@@ -52,6 +63,6 @@
     "ts-jest": "^29.2.5",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "5.6.3"
   }
 }

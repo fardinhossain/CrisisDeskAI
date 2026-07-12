@@ -94,39 +94,39 @@ export const reportService = {
       aiProvider: triage.aiProvider,
       possibleDuplicate: dup.possibleDuplicate,
       embedding,
+      weatherAdjusted,
       latitude: geocodeRes?.latitude ?? null,
       longitude: geocodeRes?.longitude ?? null,
       formattedAddress: geocodeRes?.formattedAddress ?? null,
       geocodeProvider: geocodeRes?.provider ?? null,
-      ...(weatherContext ? { weatherContext } : {}),
-      weatherAdjusted,
+      ...(weatherContext !== undefined ? { weatherContext } : {}),
       ...(dup.matchedReportId
         ? { matchedReport: { connect: { id: dup.matchedReportId } } }
         : {}),
     };
 
-    const row = await reportRepository.create(data);
+    const report = await reportRepository.create(data);
 
-    // 8. Trigger non-blocking email alert if urgency >= ALERT_MIN_URGENCY
+    // 8. Fire high/critical email alert (best-effort; never fails the submission)
     await notificationService.maybeAlert({
-      id: row.id,
-      category: row.category,
-      urgency: row.urgency,
-      location: row.location,
-      summary: row.summary,
-      suggestedAction: row.suggestedAction,
-      confidence: row.confidence,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      formattedAddress: row.formattedAddress,
+      id: report.id,
+      category: report.category,
+      urgency: report.urgency,
+      location: report.location,
+      summary: report.summary,
+      suggestedAction: report.suggestedAction,
+      confidence: report.confidence,
+      latitude: report.latitude,
+      longitude: report.longitude,
+      formattedAddress: report.formattedAddress,
     });
 
-    // Fetch final state (in case markAlertSent updated alertSent=true)
-    const finalRow = (await reportRepository.findById(row.id)) ?? row;
+    // Re-fetch so the response reflects alertSent set by the notification service
+    const finalRow = (await reportRepository.findById(report.id)) ?? report;
     return toReportResponse(finalRow);
   },
 
-  /** List reports with filters/pagination. */
+  /** List reports with filters, pagination and sort. */
   async list(filters: ReportFilters): Promise<PaginatedResult<ReportResponse>> {
     return reportRepository.findMany(filters);
   },
@@ -145,7 +145,7 @@ export const reportService = {
     return toReportResponse(row);
   },
 
-  /** Soft-delete or throw 404. Returns the deleted id. */
+  /** Soft-delete a report or throw 404. Returns the deleted id. */
   async remove(id: string): Promise<{ id: string }> {
     const row = await reportRepository.softDelete(id);
     if (!row) throw ApiError.notFound(MESSAGES.REPORT_NOT_FOUND);
