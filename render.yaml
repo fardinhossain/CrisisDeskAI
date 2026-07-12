@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: crisisdesk-ai
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: MOCK_AI
+        value: true
+      - key: MOCK_EXTERNAL
+        value: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: RATE_LIMIT_MAX
+        value: 60
+      - key: ADMIN_EMAIL
+        value: admin@crisisdesk.ai
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

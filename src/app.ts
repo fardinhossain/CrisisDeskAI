@@ -6,6 +6,7 @@ import { env } from "./config/env";
 import { requestLogger } from "./middleware/requestLogger";
 import { errorHandler, notFound } from "./middleware/error.middleware";
 import { sendSuccess } from "./utils/ApiResponse";
+import { setupDocs } from "./docs/swagger";
 import apiRouter from "./routes";
 
 /** Assembles the Express application: security, logging, rate limiting, routes, errors. */
@@ -28,6 +29,9 @@ export function createApp(): Application {
       health: "/api/health",
     });
   });
+
+  // Swagger docs
+  setupDocs(app);
 
   // Feature routes
   app.use("/api", apiRouter);

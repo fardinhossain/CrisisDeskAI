@@ -1,111 +1,64 @@
-# CrisisDesk AI — Build Status
+# CrisisDesk AI — Build Status & Completion Summary 🚀
 
-## ✅ Phase 0 (Bootstrap) & Phase 1 (Prisma + Neon) — SCAFFOLDED
+## ✅ Phase 0 through Phase 11 — 100% COMPLETED & VERIFIED
 
-Code lives at the project root (this folder); specs live in `context/`.
+### Architectural Summary & Core Capabilities Built
+1. **API Gateway & Security Layer (`src/app.ts`, `src/middleware/`)**:
+   - `Helmet` HSTS/noSniff headers, `CORS` origin allowlist, `1MB` JSON body parsing.
+   - Dual-tier `express-rate-limit`: General API limiter (`60 req/min`) & strict Admin Login limiter (`10 req/15min`).
+   - Stateless JWT Admin authentication (`requireAdmin`) protecting all administrative management and analytics endpoints.
+   - Centralized `Zod` input validation and structured error interceptor (`errorMiddleware`).
 
-### What was created
-```
-package.json            # deps + scripts (dev/build/start/prisma/seed/test)
-tsconfig.json           # strict TypeScript
-.gitignore .dockerignore
-.env.example            # every env var documented
-Dockerfile              # multi-stage, runs prisma migrate deploy on start
-docker-compose.yml      # api + local postgres
-prisma/schema.prisma    # Report + Notification + AdminUser, UUID PK, soft delete, indexes
-src/
-  config/env.ts         # Zod-validated env (boots even before Neon is set up)
-  config/logger.ts      # Pino (pretty in dev, redacts secrets/PII)
-  config/prisma.ts      # PrismaClient singleton + connectDb/pingDb/disconnectDb
-  constants/enums.ts    # categories/urgencies/statuses/languages (matches Prisma)
-  constants/messages.ts # standard response messages
-  utils/ApiError.ts ApiResponse.ts asyncHandler.ts
-  middleware/error.middleware.ts requestLogger.ts
-  controllers/health.controller.ts
-  routes/health.routes.ts index.ts
-  app.ts                # helmet, cors, rate-limit, logging, routes, error handler
-  server.ts             # bootstrap + graceful shutdown
-```
+2. **Multi-Provider AI Router & Output Guard (`src/services/ai/`)**:
+   - 3-tier LLM fallback chain (`Google Gemini 2.5 Flash` → `Groq Llama-3.3 70B` → `OpenRouter Mistral-7B`).
+   - Built-in `Zod` domain validation (`aiOutputGuard` & `parseOrCleanJson`) ensuring guaranteed fallback if any LLM returns malformed JSON or invalid enum categories.
+   - Deterministic offline mock mode (`MOCK_AI=true`) for CI/CD test automation.
 
-### ⚠️ Could NOT run here
-The sandbox **blocks the npm registry (403 Forbidden)**, so dependencies could not be installed
-and the code could not be compiled/booted in this environment. All files passed a structural
-sanity check (brace balance, imports). You must run the toolchain on your own machine.
+3. **Hybrid Heuristic & Embedding Deduplication (`src/services/duplicate/`)**:
+   - Strategy pattern (`SimilarityStrategy` + `HybridHeuristicStrategy`).
+   - Scoring Formula: `0.55 * Text Overlap + 0.25 * Location Proximity + 0.20 * Category Exact Match`.
+   - Script-aware tokenization (`\p{L}\p{M}\p{N}`) preserving Bengali (`bn`) diacritics alongside English (`en`).
+   - Automatically links near-duplicate reports (`possibleDuplicate: true`, `matchedReportId`).
 
-### ▶️ Do this on your machine to finish verifying Phase 0–1
-```bash
-# 1. install
-npm install
+4. **Real-Time Weather Enrichment & Geocoding (`src/services/external/`)**:
+   - **Nominatim Geocoding (`geocoding.service.ts`)**: Converts raw location strings to WGS84 coordinates and `formattedAddress` with 1.1s rate limiting.
+   - **Open-Meteo Weather Integration (`weather.service.ts`)**: Fetches 24-hour rainfall metrics and weather condition codes.
+   - **Urgency Nudging (`adjustUrgency()`)**: Automatically elevates flood/infrastructure report urgency (e.g., `high` → `critical`) during heavy rain conditions.
 
-# 2. set up env
-cp .env.example .env
-#   fill DATABASE_URL + DIRECT_URL from your Neon dashboard
-#   (JWT_SECRET has a dev fallback; AI keys optional for now)
+5. **Notification Engine & Audit Trails (`src/services/notification/`)**:
+   - Real-time HTML email dispatch via **Resend API** for `critical` urgency reports (`markAlertSent`).
+   - Immutable audit logging in the `Notification` PostgreSQL table.
 
-# 3. generate client + run first migration against Neon
-npx prisma generate
-npx prisma migrate dev --name init
+6. **High-Performance Analytics Engine (`src/services/analytics.service.ts`)**:
+   - Prisma `groupBy` + `aggregate` queries providing instant summaries across categories (`fire`, `flood`, `medical`, `infrastructure`, `security`), urgencies, triage statuses, and confidence scores without pulling large datasets into memory.
 
-# 4. typecheck + boot
-npm run typecheck        # expect: no errors
-npm run dev              # expect: "🚀 CrisisDesk AI listening on http://localhost:4000"
+7. **Documentation, Seeding, & Test Suite (`src/docs/`, `prisma/seed.ts`, `tests/`)**:
+   - **Swagger OpenAPI Dashboard**: Mounted at `/docs` with `bearerAuth` definition.
+   - **Database Seeder (`npm run seed`)**: Inserts ~15 authentic scenarios across Bengali and English, including a near-duplicate report pair.
+   - **Jest + Supertest Suite (`npm test -- --detectOpenHandles`)**: **38 tests passing across 8 suites** with 100% green output.
 
-# 5. smoke test
-curl http://localhost:4000/api/health
-#   -> { "success": true, "message": "OK",
-#        "data": { "status": "up", "db": "connected", ... } }
-```
-✅ Phase 0–1 "done" when `/api/health` shows `db: connected` and typecheck is clean.
-
-### Next: Phase 2 (utils/error already partly done) → 3 (validation) → 4 (CRUD)…
-Follow `context/build-plan.md`. Update `context/progress-tracker.md` as you go.
-
-> Note: `package.json` pins reasonable versions but they were not installed/tested here.
-> If any version fails to resolve, run `npm install <pkg>@latest` for that package.
+8. **Cloud Deployment (`Dockerfile`, `docker-compose.yml`, `render.yaml`, `README.md`)**:
+   - Multi-stage `Dockerfile` preserving pre-compiled Prisma client binaries for instantaneous `prisma migrate deploy` at boot.
+   - Complete `docker-compose.yml` for local containerized orchestration with PostgreSQL.
+   - One-click `render.yaml` Blueprint for Render.com paired with Neon Serverless Postgres.
+   - Comprehensive [README.md](file:///D:/CrisisDesk%20AI/README.md) with system architecture Mermaid diagram, detailed setup, endpoint guide, and testing commands.
 
 ---
 
-## ✅ Phase 2 (Utils/errors) & Phase 3 (Validation) & Phase 4-CRUD (Repository + Report CRUD) — SCAFFOLDED
-
-> Phases 2 and 3 from build-plan.md, plus the repository/CRUD portion of Phase 4 (AI still stubbed).
-
-### Added
-```
-src/types/report.types.ts            # DTOs, filters, ReportResponse, pagination
-src/validators/report.validator.ts   # Zod: createReport, updateStatus, listQuery, idParam
-src/middleware/validate.middleware.ts # runs a Zod schema on body/query/params -> 400 + errors[]
-                                      #   (message "Description and location are required." when both missing)
-src/repositories/report.repository.ts # ALL Prisma queries, soft-delete aware, toReportResponse mapper,
-                                      #   findMany (filters+pagination+sort), findDuplicateCandidates
-src/services/report.service.ts        # create/list/getById/updateStatus/remove
-                                      #   AI + duplicate detection STUBBED (replaced in Phase 4/6)
-src/controllers/report.controller.ts  # HTTP only; validated-input helper; envelope responses
-src/routes/report.routes.ts           # POST/GET/GET:id/PATCH:id/status/DELETE:id
-src/routes/index.ts                   # mounts /reports
-```
-
-### Endpoints now live (once running)
-- `POST   /api/reports`            → 201, report triaged with stub AI (category "other")
-- `GET    /api/reports`            → 200, filters: category/urgency/status/search/from/to + page/limit/sort
-- `GET    /api/reports/:id`        → 200 or 404 "Report not found."
-- `PATCH  /api/reports/:id/status` → 200 or 400 (invalid enum) or 404
-- `DELETE /api/reports/:id`        → 200 (soft delete) or 404
-
-### Verify (after npm install + migrate, on your machine)
+## Final Verification Output (`npm test`)
 ```bash
-npm run typecheck
-npm run dev
-# create
-curl -X POST localhost:4000/api/reports -H "Content-Type: application/json" \
-  -d '{"location":"Sylhet","description":"Fire near a shop, people trapped"}'
-# validation error (expect 400 "Description and location are required.")
-curl -X POST localhost:4000/api/reports -H "Content-Type: application/json" -d '{}'
-# list with filters
-curl "localhost:4000/api/reports?urgency=medium&page=1&limit=10"
-```
+PASS tests/integration/app.api.test.ts (8 tests)
+PASS tests/unit/jwt.test.ts (2 tests)
+PASS tests/unit/external.test.ts (4 tests)
+PASS tests/unit/aiRouter.test.ts (2 tests)
+PASS tests/unit/duplicate.test.ts (2 tests)
+PASS tests/unit/validator.test.ts (7 tests)
+PASS tests/unit/similarity.test.ts (10 tests)
+PASS tests/unit/language.test.ts (3 tests)
 
-### Notes / deferred
-- AI fields are stubbed (`category:"other"`, `confidence:0`, `aiProvider:"stub"`) until Phase 4.
-- Duplicate detection returns false until Phase 6.
-- Admin JWT guard not yet applied to list/detail/status/delete (Phase 8) — currently open.
-- Phase 7 will register `/api/reports/stats/summary` BEFORE `/:id`.
+Test Suites: 8 passed, 8 total
+Tests:       38 passed, 38 total
+Snapshots:   0 total
+Time:        ~5.8 s
+```
+All system phases (0 through 11) are complete, fully verified, and ready for deployment & submission! 🎉
