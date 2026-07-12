@@ -68,5 +68,6 @@ export interface ReportResponse {
 
 export interface PaginatedResult<T> {
   items: T[];
+  reports?: T[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }

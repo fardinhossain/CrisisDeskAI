@@ -66,6 +66,7 @@ export const reportRepository = {
 
     return {
       items: rows.map(toReportResponse),
+      reports: rows.map(toReportResponse),
       pagination: {
         page: filters.page,
         limit: filters.limit,
