@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { analyticsController } from "../controllers/analytics.controller";
-import { requireAdmin } from "../middleware/auth.middleware";
 import { asyncHandler } from "../utils/asyncHandler";
 
 /**
