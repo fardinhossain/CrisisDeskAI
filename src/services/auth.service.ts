@@ -57,6 +57,10 @@ export const authService = {
         email: normalizedEmail,
         role: "admin",
       },
+      admin: {
+        name: "Supervisor",
+        email: normalizedEmail,
+      },
     };
   },
 };

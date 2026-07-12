@@ -17,4 +17,8 @@ export interface LoginResult {
     email: string;
     role: string;
   };
+  admin?: {
+    name: string;
+    email: string;
+  };
 }
