@@ -1,0 +1,121 @@
+// CrisisDesk AI — Prisma schema (Neon PostgreSQL)
+// See context/data-model.md for rationale.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Neon pooled connection (runtime)
+  directUrl = env("DIRECT_URL")   // Neon direct connection (migrations)
+}
+
+enum Category {
+  medical
+  fire
+  accident
+  crime
+  flood
+  utility
+  public_service
+  infrastructure
+  other
+}
+
+enum Urgency {
+  low
+  medium
+  high
+  critical
+}
+
+enum ReportStatus {
+  pending
+  in_review
+  assigned
+  resolved
+  rejected
+}
+
+enum Language {
+  bn
+  en
+  unknown
+}
+
+model Report {
+  id                String       @id @default(uuid()) @db.Uuid
+  name              String?
+  contact           String?
+  location          String
+  description       String
+  language          Language     @default(unknown)
+  category          Category     @default(other)
+  urgency           Urgency      @default(medium)
+  summary           String       @default("")
+  suggestedAction   String       @default("")
+  confidence        Float        @default(0)
+  possibleDuplicate Boolean      @default(false)
+  status            ReportStatus @default(pending)
+  embedding         Float[] // dedupe vector; excluded by repository mapper
+  aiProvider        String       @default("unknown")
+
+  // Geocoding enrichment (Nominatim / OpenStreetMap)
+  latitude         Float?
+  longitude        Float?
+  formattedAddress String?
+  geocodeProvider  String?
+
+  // Weather enrichment (Open-Meteo)
+  weatherContext  Json?
+  weatherAdjusted Boolean @default(false)
+
+  // Email alerting (Resend)
+  alertSent   Boolean   @default(false)
+  alertSentAt DateTime?
+
+  // Self-relation for duplicate linkage
+  matchedReportId String?  @db.Uuid
+  matchedReport   Report?  @relation("Duplicates", fields: [matchedReportId], references: [id], onDelete: SetNull)
+  duplicates      Report[] @relation("Duplicates")
+
+  notifications Notification[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft delete (null = active)
+
+  @@index([category])
+  @@index([urgency])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([category, createdAt])
+  @@map("reports")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  reportId  String   @db.Uuid
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  channel   String   @default("email")
+  provider  String   @default("resend")
+  status    String   @default("sent") // sent | failed
+  target    String
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([reportId])
+  @@map("notifications")
+}
+
+model AdminUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+
+  @@map("admin_users")
+}

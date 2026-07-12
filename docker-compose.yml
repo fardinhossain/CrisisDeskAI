@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    ports:
+      - "4000:4000"
+    env_file: .env
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crisis
+      POSTGRES_PASSWORD: crisis
+      POSTGRES_DB: crisisdesk
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
