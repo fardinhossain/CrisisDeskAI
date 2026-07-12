@@ -58,7 +58,7 @@ export const authService = {
         role: "admin",
       },
       admin: {
-        name: "Supervisor",
+        name: "Admin",
         email: normalizedEmail,
       },
     };
