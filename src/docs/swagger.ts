@@ -282,5 +282,14 @@ body {
  * Mount Swagger UI at `/docs`.
  */
 export function setupDocs(app: Application): void {
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss }));
+  app.use(
+    "/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+      customCss,
+      swaggerOptions: {
+        defaultModelsExpandDepth: -1,
+      },
+    })
+  );
 }
