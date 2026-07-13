@@ -13,6 +13,7 @@ FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci --omit=dev
 COPY --from=build /app/node_modules/prisma ./node_modules/prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
