@@ -7,8 +7,8 @@ import { jaccard, cosine, haversineKm } from "../utils/similarity";
 
 /**
  * Determine if the location matches between two reports.
- * 1. If coordinates are present, distance must be within 5.0 km.
- * 2. Otherwise, falls back to token overlap of the raw location string (Jaccard similarity >= 0.15).
+ * 1. If coordinates are present, distance must be within 2.0 km.
+ * 2. Otherwise, falls back to token overlap of the raw location string (Jaccard similarity >= 0.30).
  */
 export function isLocationMatch(a: ReportLike, b: ReportLike): boolean {
   if (
@@ -18,9 +18,26 @@ export function isLocationMatch(a: ReportLike, b: ReportLike): boolean {
     typeof b.longitude === "number"
   ) {
     const km = haversineKm(a.latitude, a.longitude, b.latitude, b.longitude);
-    return km <= 5.0;
+    return km <= 2.0;
   }
-  return jaccard(a.location, b.location) >= 0.15;
+  return jaccard(a.location, b.location) >= 0.30;
+}
+
+/**
+ * Determine if the description/context matches between two reports.
+ * 1. If embeddings are present, cosine similarity must be >= 0.75.
+ * 2. Otherwise, Jaccard text similarity must be >= 0.85.
+ */
+export function isDescriptionMatch(a: ReportLike, b: ReportLike): boolean {
+  if (
+    a.embedding &&
+    a.embedding.length > 0 &&
+    b.embedding &&
+    b.embedding.length > 0
+  ) {
+    return cosine(a.embedding, b.embedding) >= 0.75;
+  }
+  return jaccard(a.description, b.description) >= 0.85;
 }
 
 /**
@@ -53,21 +70,9 @@ export class DuplicateService {
     for (const c of candidates) {
       if (c.id === input.id) continue;
 
-      // Skip candidate if the locations do not match
-      if (!isLocationMatch(input, c)) continue;
-
-      // Compute pure text similarity for hard short-circuit check
-      let textSim: number;
-      if (
-        this.strategy.name === "embedding" &&
-        input.embedding &&
-        input.embedding.length > 0 &&
-        c.embedding &&
-        c.embedding.length > 0
-      ) {
-        textSim = Math.max(0, cosine(input.embedding, c.embedding));
-      } else {
-        textSim = jaccard(input.description, c.description);
+      // Both location AND description/context must match to be considered a duplicate!
+      if (!isLocationMatch(input, c) || !isDescriptionMatch(input, c)) {
+        continue;
       }
 
       const score = await this.strategy.score(input, {
@@ -80,22 +85,10 @@ export class DuplicateService {
         embedding: c.embedding,
       });
 
-      const isHardMatch = textSim >= env.DUP_TEXT_HARD;
-      const isThresholdMatch = score >= env.DUP_THRESHOLD;
-      const isCandidateMatch = isHardMatch || isThresholdMatch;
-
+      possibleDuplicate = true;
       if (score > bestScore) {
         bestScore = score;
-        if (isCandidateMatch) {
-          possibleDuplicate = true;
-          bestMatchId = c.id;
-        }
-      } else if (isHardMatch && !possibleDuplicate) {
-        possibleDuplicate = true;
         bestMatchId = c.id;
-        if (textSim > bestScore) {
-          bestScore = textSim;
-        }
       }
     }
 
