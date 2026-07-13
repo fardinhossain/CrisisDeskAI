@@ -122,12 +122,10 @@ export const swaggerSpec = {
     },
     "/reports/stats/summary": {
       get: {
-        summary: "System analytics summary (Admin)",
+        summary: "System analytics summary (Public)",
         tags: ["Analytics"],
-        security: [{ bearerAuth: [] }],
         responses: {
           200: { description: "Aggregated totals and breakdowns" },
-          401: { description: "Unauthorized" },
         },
       },
     },
@@ -180,9 +178,109 @@ export const swaggerSpec = {
   },
 };
 
+const customCss = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+body {
+  margin: 0;
+  background: #0f172a;
+}
+.swagger-ui {
+  font-family: 'Inter', sans-serif !important;
+  background: radial-gradient(circle at top right, #1e1b4b, #0f172a 60%) !important;
+  color: #f1f5f9 !important;
+  min-height: 100vh;
+  padding-bottom: 50px;
+}
+.swagger-ui .topbar {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.swagger-ui .info .title {
+  color: #ffffff !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  background: linear-gradient(135deg, #a78bfa, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.swagger-ui .info p, .swagger-ui .info li, .swagger-ui .info td {
+  color: #94a3b8 !important;
+}
+.swagger-ui .scheme-container {
+  background: rgba(30, 41, 59, 0.5) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  margin: 20px 0 !important;
+  padding: 15px 20px !important;
+}
+.swagger-ui select, .swagger-ui input[type=text] {
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+.swagger-ui .btn {
+  border-radius: 8px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+.swagger-ui .btn.authorize {
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+  color: white !important;
+  border: none !important;
+}
+.swagger-ui .btn.authorize:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+.swagger-ui .opblock {
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  background: rgba(30, 41, 59, 0.3) !important;
+  backdrop-filter: blur(4px);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.swagger-ui .opblock:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+}
+.swagger-ui .opblock .opblock-summary {
+  padding: 12px 20px !important;
+}
+.swagger-ui .opblock .opblock-summary-method {
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+}
+.swagger-ui .opblock-post {
+  background: rgba(16, 185, 129, 0.05) !important;
+}
+.swagger-ui .opblock-get {
+  background: rgba(59, 130, 246, 0.05) !important;
+}
+.swagger-ui .opblock-put {
+  background: rgba(245, 158, 11, 0.05) !important;
+}
+.swagger-ui .opblock-delete {
+  background: rgba(239, 68, 68, 0.05) !important;
+}
+.swagger-ui .opblock-patch {
+  background: rgba(139, 92, 246, 0.05) !important;
+}
+.swagger-ui .model-box {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 8px !important;
+}
+`;
+
 /**
  * Mount Swagger UI at `/docs`.
  */
 export function setupDocs(app: Application): void {
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss }));
 }
