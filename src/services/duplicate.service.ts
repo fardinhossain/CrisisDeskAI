@@ -3,7 +3,25 @@ import { logger } from "../config/logger";
 import { reportRepository } from "../repositories/report.repository";
 import type { SimilarityStrategy, ReportLike, DuplicateCheckResult } from "../types/duplicate.types";
 import { HybridHeuristicStrategy, EmbeddingStrategy } from "./duplicate/strategies";
-import { jaccard, cosine } from "../utils/similarity";
+import { jaccard, cosine, haversineKm } from "../utils/similarity";
+
+/**
+ * Determine if the location matches between two reports.
+ * 1. If coordinates are present, distance must be within 5.0 km.
+ * 2. Otherwise, falls back to token overlap of the raw location string (Jaccard similarity >= 0.15).
+ */
+export function isLocationMatch(a: ReportLike, b: ReportLike): boolean {
+  if (
+    typeof a.latitude === "number" &&
+    typeof a.longitude === "number" &&
+    typeof b.latitude === "number" &&
+    typeof b.longitude === "number"
+  ) {
+    const km = haversineKm(a.latitude, a.longitude, b.latitude, b.longitude);
+    return km <= 5.0;
+  }
+  return jaccard(a.location, b.location) >= 0.15;
+}
 
 /**
  * Duplicate detection service.
@@ -34,6 +52,9 @@ export class DuplicateService {
 
     for (const c of candidates) {
       if (c.id === input.id) continue;
+
+      // Skip candidate if the locations do not match
+      if (!isLocationMatch(input, c)) continue;
 
       // Compute pure text similarity for hard short-circuit check
       let textSim: number;
