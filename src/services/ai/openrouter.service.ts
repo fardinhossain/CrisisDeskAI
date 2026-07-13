@@ -7,7 +7,7 @@ import { openaiCompatChat } from "../../utils/openai-compat";
 
 /**
  * OpenRouter AI provider — third (last) fallback in the chain.
- * Uses OpenRouter's OpenAI-compatible REST API with a free Qwen3 model.
+ * Uses OpenRouter's OpenAI-compatible REST API with a free Qwen model.
  */
 class OpenRouterService implements AiProvider {
   readonly name = "openrouter";

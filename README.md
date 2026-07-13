@@ -39,9 +39,9 @@ graph TD
         ReportSvc[Report Service]
         
         subgraph AI Router 3-Tier Fallback Chain
-            Gemini[Google Gemini 2.5 Flash]
+            Gemini[Google Gemini 3.5 Flash]
             Groq[Groq Llama-3.3 70B]
-            OpenRouter[OpenRouter Mistral-7B]
+            OpenRouter[OpenRouter Qwen 2.5 7B]
             AiGuard[Zod AI Output Guard]
         end
         
@@ -96,13 +96,54 @@ graph TD
 
 ---
 
+## 📁 Project Directory Structure
+
+CrisisDesk AI is organized as follows:
+
+```
+CrisisDeskAI/
+├── prisma/                 # Database schema definition and seed configuration
+│   ├── schema.prisma       # Prisma DB schema definition (Neon PostgreSQL)
+│   └── seed.ts             # Script to seed development database with mock reports
+├── src/                    # Application source code
+│   ├── config/             # Environment configuration (env parser, logger, database connection)
+│   ├── constants/          # Application-wide constants and messages
+│   ├── controllers/        # Express route controllers handling request-response logic
+│   ├── docs/               # OpenAPI/Swagger documentation definitions
+│   ├── middleware/         # Custom Express middlewares (auth, validate, rate limits, errors)
+│   ├── repositories/       # Database access repository layer abstracting Prisma operations
+│   ├── routes/             # Express API route endpoints definitions
+│   ├── services/           # Application service layer encapsulating business logic
+│   │   ├── ai/             # Multi-provider AI Router fallback chain services (Gemini, Groq, OpenRouter)
+│   │   ├── duplicate/      # Duplicate detection engine & heuristics/embedding strategies
+│   │   ├── external/       # External APIs integrations (Nominatim geocoding, Open-Meteo weather)
+│   │   ├── notification/   # Real-time alert dispatches via Resend Email API
+│   │   ├── analytics.service.ts
+│   │   ├── auth.service.ts
+│   │   ├── duplicate.service.ts
+│   │   └── report.service.ts
+│   ├── types/              # Domain-specific TypeScript types and Zod schemas
+│   ├── utils/              # General helper utilities (similarity, language detection, JWT, AsyncHandler)
+│   ├── validators/         # Request body/query validation schemas using Zod
+│   ├── app.ts              # Express application configuration
+│   └── server.ts           # HTTP server bootstrapping and initialization
+├── tests/                  # Automated test suite (Jest + Supertest)
+│   ├── integration/        # End-to-end endpoint API integration tests
+│   └── unit/               # Domain logic unit tests (similarity, validation, language, etc.)
+├── .env.example            # Template configuration for environment variables
+├── docker-compose.yml      # Local Postgres service orchestration with Docker Compose
+└── Dockerfile              # Multi-stage production Docker image definition
+```
+
+---
+
 ## 🌟 Key Innovations & Architectural Highlights
 
 ### 1. 🛡️ Multi-Provider AI Router & Output Guard (`src/services/ai/`)
 Relying on a single AI provider during a major crisis creates a single point of failure. CrisisDesk AI implements a **resilient 3-tier fallback chain**:
-- **Primary**: Google Gemini (`gemini-2.5-flash`) for low-latency classification and 768-dimensional vector embedding generation.
+- **Primary**: Google Gemini (`gemini-3.5-flash`) for low-latency classification and 768-dimensional vector embedding generation.
 - **Secondary**: Groq (`llama-3.3-70b-versatile`) for ultra-fast fallback parsing.
-- **Tertiary**: OpenRouter (`mistralai/mistral-7b-instruct`) as the final safeguard.
+- **Tertiary**: OpenRouter (`qwen/qwen-2.5-7b-instruct`) as the final safeguard.
 - **AI Output Guard**: LLM outputs are piped through an automated JSON cleaner (`parseOrCleanJson`) and strict `Zod` domain schema (`aiOutputGuard`). If any provider returns invalid enum categories or out-of-bounds confidence intervals, the guard clamps values or triggers instant retry/fallback before throwing structured unprocessable errors.
 
 ### 2. 🧬 Hybrid Heuristic & Embedding Deduplication (`src/services/duplicate/`)
@@ -117,7 +158,7 @@ Environmental factors drastically alter incident severity. CrisisDesk AI automat
 - **Weather Nudging (`adjustUrgency()`)**: Queries Open-Meteo for live 24-hour rainfall and severe weather codes at the report's exact coordinates. If a `flood` or `infrastructure` report is submitted during heavy rain conditions (`rain24hMm >= 50` or severe storm codes), the system **automatically nudges urgency upward** (e.g., elevating a `high` flood report directly to `critical`), ensuring immediate dispatch priority.
 
 ### 4. 🚨 Resend Notification Engine & Audit Trails (`src/services/notification/`)
-Whenever a report is triaged with `critical` urgency (or nudged to `critical` via severe weather), the `NotificationService` dispatches real-time HTML email alerts to emergency response command centers (`env.ALERT_RECIPIENT`) via Resend API. Delivery status, subject lines, and error logs are immutably written to the `Notification` table in PostgreSQL for full operational auditing (`markAlertSent`).
+Whenever a report is triaged with `critical` urgency (or nudged to `critical` via severe weather), the `NotificationService` dispatches real-time HTML email alerts to emergency response command centers (`env.ALERT_TO_EMAILS`) via Resend API. Delivery status, subject lines, and error logs are immutably written to the `Notification` table in PostgreSQL for full operational auditing (`markAlertSent`).
 
 ### 5. 📊 High-Performance Aggregation Engine (`src/services/analytics.service.ts`)
 Admin dashboards require instant situational awareness. The `AnalyticsService` executes optimized Prisma aggregate queries (`groupBy`, `count`, `aggregate`) across non-deleted rows, returning sub-10ms breakdowns of total reports, category distributions (`fire`, `flood`, `medical`, `infrastructure`, `security`), urgency breakdowns, and average triage confidence without pulling large table scans into application memory.
@@ -165,7 +206,8 @@ cp .env.example .env
 | `GROQ_API_KEY` | Optional | `gsk_...` | Groq API key for secondary LLM parsing fallback |
 | `OPENROUTER_API_KEY` | Optional | `sk-or-v1-...` | OpenRouter API key for tertiary LLM parsing fallback |
 | `RESEND_API_KEY` | Optional | `re_123...` | Resend API key for dispatching critical email alerts |
-| `ALERT_RECIPIENT` | Optional | `alert@crisisdesk.ai` | Target email address where critical emergency notifications are sent |
+| `ALERT_FROM_EMAIL` | Optional | `alerts@crisisdesk.ai` | Sender email address for Resend alerts |
+| `ALERT_TO_EMAILS` | Optional | `responder@example.com` | Comma-separated target email addresses where critical emergency notifications are sent |
 | `MOCK_AI` | Optional | `false` | Set `true` to bypass LLM APIs and return deterministic classifications locally |
 | `MOCK_EXTERNAL` | Optional | `false` | Set `true` to bypass external Nominatim/Open-Meteo calls locally |
 | `RATE_LIMIT_MAX` | Optional | `60` | Maximum requests per minute allowed across general API endpoints |

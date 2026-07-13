@@ -47,7 +47,7 @@ const schema = z.object({
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.string().default("llama-3.3-70b-versatile"),
   OPENROUTER_API_KEY: z.string().optional(),
-  OPENROUTER_MODEL: z.string().default("meta-llama/llama-3.3-70b-instruct:free"),
+  OPENROUTER_MODEL: z.string().default("qwen/qwen-2.5-7b-instruct"),
 
   AI_TIMEOUT_MS: numberish(8000),
   AI_RETRIES: numberish(1),
