@@ -33,8 +33,8 @@ reportRouter.get(
   asyncHandler(reportController.list)
 );
 
-// GET /api/reports/stats/summary  (public)
-reportRouter.use("/stats", analyticsRouter);
+// GET /api/reports/stats/summary  (admin)
+reportRouter.use("/stats", requireAdmin, analyticsRouter);
 
 // GET /api/reports/:id  (admin)
 reportRouter.get(

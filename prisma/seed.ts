@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { Category, Urgency, ReportStatus, Language } from "../src/constants/enums";
+import { Category, Urgency, ReportStatus, Language } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
