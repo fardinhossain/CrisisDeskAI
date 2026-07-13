@@ -38,7 +38,7 @@ export interface ReportFilters {
   sort: string;
 }
 
-/** Public report shape returned by the API (embedding/deletedAt stripped). */
+/** Public report shape returned by the API (embedding/deletedAt/extra-metadata stripped). */
 export interface ReportResponse {
   id: string;
   name: string | null;
@@ -54,14 +54,6 @@ export interface ReportResponse {
   possibleDuplicate: boolean;
   matchedReportId: string | null;
   status: ReportStatus;
-  aiProvider: string;
-  latitude: number | null;
-  longitude: number | null;
-  formattedAddress: string | null;
-  weatherContext: unknown;
-  weatherAdjusted: boolean;
-  alertSent: boolean;
-  alertSentAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

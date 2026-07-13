@@ -40,10 +40,11 @@ export const swaggerSpec = {
         type: "object",
         required: ["description", "location"],
         properties: {
-          description: { type: "string", example: "Large fire at Mirpur 10 market, spreading fast!" },
-          location: { type: "string", example: "Mirpur 10, Dhaka" },
-          contact: { type: "string", example: "+8801712345678" },
-          clientTimestamp: { type: "string", format: "date-time" },
+          name: { type: "string", example: "Rahim" },
+          contact: { type: "string", example: "017xxxxxxxx" },
+          location: { type: "string", example: "Sylhet Bondor Bazar" },
+          description: { type: "string", example: "There is a fire near a shop and people are trapped." },
+          language: { type: "string", enum: ["bn", "en", "unknown"], example: "bn" },
         },
       },
       LoginInput: {
