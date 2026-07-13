@@ -21,9 +21,17 @@ describe("Integration API Tests (supertest + MOCK_AI=true)", () => {
         prisma.report.count(),
         new Promise((_, reject) => setTimeout(() => reject(new Error("DB/Table Not Ready")), 2500)),
       ]);
-      dbConnected = true;
-      await prisma.notification.deleteMany();
-      await prisma.report.deleteMany();
+
+      const dbUrl = process.env.DATABASE_URL || "";
+      if (dbUrl.includes("neon.tech") || dbUrl.includes("neondb")) {
+        // eslint-disable-next-line no-console
+        console.warn("⚠️ Safety Warning: Remote Neon database detected in tests. Skipping database wipes to prevent data loss.");
+        dbConnected = false;
+      } else {
+        dbConnected = true;
+        await prisma.notification.deleteMany();
+        await prisma.report.deleteMany();
+      }
     } catch {
       dbConnected = false;
     }

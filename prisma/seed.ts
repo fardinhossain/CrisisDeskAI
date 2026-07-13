@@ -7,7 +7,15 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log("🌱 Starting CrisisDesk AI database seed...");
 
-  // Clean existing data for clean demo runs
+  // Check if data already exists to prevent accidental wipes
+  const existingCount = await prisma.report.count();
+  if (existingCount > 0 && process.env.FORCE_SEED !== "true") {
+    // eslint-disable-next-line no-console
+    console.log("🌱 Database already has data. Skipping seed to prevent data loss.");
+    return;
+  }
+
+  // Clean existing data only when seeding is allowed or forced
   await prisma.notification.deleteMany();
   await prisma.report.deleteMany();
 
